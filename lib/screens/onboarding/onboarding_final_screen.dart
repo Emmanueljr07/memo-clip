@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:memo_clip/screens/reminders/tabs.dart';
 
 class OnboardingFinalScreen extends StatefulWidget {
   const OnboardingFinalScreen({super.key});
@@ -102,7 +103,14 @@ class _OnboardingFinalScreenState extends State<OnboardingFinalScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 18.0),
                 child: TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TabsScreen(),
+                      ),
+                    );
+                  },
                   style: TextButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
