@@ -31,7 +31,7 @@ class _OnboardingPermissionsScreenState
             onPressed: () {
               Navigator.pop(context);
             },
-            icon: Icon(Icons.cancel_rounded, color: colorScheme.onSurface),
+            icon: Icon(Icons.close_rounded, color: colorScheme.onSurface),
           ),
         ],
       ),
