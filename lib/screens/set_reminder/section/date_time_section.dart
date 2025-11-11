@@ -3,17 +3,13 @@ import 'package:memo_clip/widgets/date_input_field.dart';
 import 'package:memo_clip/widgets/time_input_field.dart';
 
 class DateTimeSection extends StatefulWidget {
-  final TextEditingController dateController;
-  final TextEditingController timeController;
-  final DateTime selectedDate;
-  final TimeOfDay selectedTime;
+  final void Function(DateTime selectedDate) onDateChanged;
+  final void Function(TimeOfDay selectedTime) onTimeChanged;
 
   const DateTimeSection({
     super.key,
-    required this.dateController,
-    required this.timeController,
-    required this.selectedDate,
-    required this.selectedTime,
+    required this.onDateChanged,
+    required this.onTimeChanged,
   });
 
   @override
@@ -21,6 +17,9 @@ class DateTimeSection extends StatefulWidget {
 }
 
 class _DateTimeSectionState extends State<DateTimeSection> {
+  DateTime? _date;
+  TimeOfDay? _time;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -38,8 +37,12 @@ class _DateTimeSectionState extends State<DateTimeSection> {
                       title: Text("Date"),
                     ),
                     DateInputField(
-                      dateController: widget.dateController,
-                      selectedDate: widget.selectedDate,
+                      onDateChanged: (DateTime selectedDate) {
+                        setState(() {
+                          _date = selectedDate;
+                          widget.onDateChanged(_date!);
+                        });
+                      },
                     ),
                   ],
                 ),
@@ -54,8 +57,12 @@ class _DateTimeSectionState extends State<DateTimeSection> {
                       title: Text("Time"),
                     ),
                     TimeInputField(
-                      timeController: widget.timeController,
-                      selectedTime: widget.selectedTime,
+                      onTimeChanged: (TimeOfDay selectedTime) {
+                        setState(() {
+                          _time = selectedTime;
+                          widget.onTimeChanged(_time!);
+                        });
+                      },
                     ),
                   ],
                 ),

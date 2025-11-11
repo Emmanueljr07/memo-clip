@@ -24,26 +24,26 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
   File? thumbnailFilePath;
 
   // Controller handlers for DateTimeSection
-  late final TextEditingController dateController;
-  late final TextEditingController timeController;
-  late final DateTime selectedDate;
-  late final TimeOfDay selectedTime;
+  DateTime? pickedDate;
+  TimeOfDay? pickedTime;
 
   void _saveReminder() {
     final enteredtitle = titleController.text;
     final enteredVideo = videoPath;
-    final scheduledDate = selectedDate;
-    final scheduledTime = selectedTime;
+    final scheduledDate = pickedDate;
+    final scheduledTime = pickedTime;
     final thumbnail = thumbnailFilePath;
     final isActive = true;
+
+    debugPrint("Time: $pickedTime");
 
     ref
         .read(userRemindersProvider.notifier)
         .addReminder(
           enteredVideo!,
           enteredtitle,
-          scheduledDate,
-          scheduledTime,
+          scheduledDate!,
+          scheduledTime!,
           thumbnail!,
           isActive,
         );
@@ -61,10 +61,8 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
   void initState() {
     super.initState();
     titleController = TextEditingController();
-    dateController = TextEditingController();
-    timeController = TextEditingController();
-    selectedDate = DateTime.now();
-    selectedTime = TimeOfDay.now();
+    // selectedDate = DateTime.now();
+    // selectedTime = TimeOfDay.now();
     videoPath = null;
     thumbnailFilePath = null;
   }
@@ -72,8 +70,6 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
   @override
   void dispose() {
     titleController.dispose();
-    dateController.dispose();
-    timeController.dispose();
     super.dispose();
   }
 
@@ -131,10 +127,18 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
 
                       // Data and Time Section
                       DateTimeSection(
-                        dateController: dateController,
-                        timeController: timeController,
-                        selectedDate: selectedDate,
-                        selectedTime: selectedTime,
+                        // selectedDate: DateTime.now(),
+                        // selectedTime: TimeOfDay.now(),
+                        onDateChanged: (DateTime selectedDate) {
+                          setState(() {
+                            pickedDate = selectedDate;
+                          });
+                        },
+                        onTimeChanged: (TimeOfDay selectedTime) {
+                          setState(() {
+                            pickedTime = selectedTime;
+                          });
+                        },
                       ),
                     ],
                   ),
