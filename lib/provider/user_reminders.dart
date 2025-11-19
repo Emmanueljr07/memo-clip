@@ -1,18 +1,24 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:memo_clip/constants/constants.dart';
 import 'package:memo_clip/models/reminder_item.dart';
 import 'package:path_provider/path_provider.dart' as syspaths;
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart' as sql;
 import 'package:sqflite/sqlite_api.dart';
-import 'package:workmanager/workmanager.dart';
+// import 'package:workmanager/workmanager.dart';
 
 class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
   UserRemindersNotifier() : super(const []);
+
+  static const platform = MethodChannel(Constants.plateformSTRING);
 
   final FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -100,61 +106,80 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
     debugPrint('Date added: ${reminder.scheduledDate}');
 
     // Schedule background check
-    final day = reminder.scheduledDate;
-    final delay = reminder.scheduledTime.minute - DateTime.now().minute;
-    bool isToday = DateUtils.isSameDay(day, DateTime.now());
+    final videoUrl = reminder.videoPath.path;
+    final alarmTitle = reminder.title;
+    final alarmId = (reminder.id).hashCode;
+    // final alarmId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
-    // Check If Reminder Day is Today
-    if (isToday) {
-      // Check if Reminder Time is Later than Now (Delay in minutes)
-      if (delay > 0) {
-        debugPrint("The delay: $delay");
-        await Workmanager().registerOneOffTask(
-          "video_${reminder.id}",
-          "check_video_schedule",
-          inputData: {"reminder_id": reminder.id},
-          initialDelay: Duration(minutes: delay),
-        );
-      }
+    if (videoUrl.isEmpty) {
+      // _showError('Please enter a video URL');
+      // showMessage(context, "Please enter a video URL", Colors.red);
+      debugPrint("Video URL is empty");
+      return;
     }
-
-    // final delay = reminder.scheduledDate.difference(DateTime.now());
-    // if (delay.inSeconds > 0) {
-    //   await Workmanager().registerOneOffTask(
-    //     "video_${reminder.id}",
-    //     "check_video_schedule",
-    //     inputData: {},
-    //     initialDelay: delay,
-    //   );
-  }
-
-  Future<void> checkAndShowScheduledVideos() async {
-    // final prefs = await SharedPreferences.getInstance();
-    // final videosJson = prefs.getStringList('scheduled_videos') ?? [];
-
-    final db = await _getDatabase();
-    final data = await db.query('user_reminders');
-    // final now = DateTime.now();
-
-    for (final videoJson in data) {
-      final video = ReminderItem.fromJson(videoJson);
-
-      // Check if it's time to show this video (Video Time is the same as Time of the day)
+    final pickedDate = reminder.scheduledDate;
+    final pickedTime = reminder.scheduledTime;
+    try {
+      final year = pickedDate.year;
+      final month = pickedDate.month;
+      final day = pickedDate.day;
+      final hour = pickedTime.hour;
+      final minute = pickedTime.minute;
+      // Calculate trigger time in milliseconds
       final now = DateTime.now();
-      final timeOfTheDay = TimeOfDay.now();
-      if (video.scheduledDate.isAtSameMomentAs(now) &&
-          video.scheduledTime.isAtSameTimeAs(timeOfTheDay)) {
-        await _showVideoNotification(video);
+      final scheduledDate = DateTime(year, month, day, hour, minute);
 
-        // Remove non-recurring videos after showing
-        if (!video.isActive) {
-          await removeScheduledVideo(video.id);
-        }
-      }
+      // If selected time is in the past today, schedule for tomorrow
+      final triggerTime = scheduledDate.isBefore(now)
+          ? scheduledDate.add(const Duration(days: 1))
+          : scheduledDate;
+
+      final triggerTimeMillis = triggerTime.millisecondsSinceEpoch;
+
+      // Call native method to schedule alarm
+      final result = await platform.invokeMethod('scheduleAlarm', {
+        'alarmId': alarmId,
+        'triggerTimeMillis': triggerTimeMillis,
+        'videoUrl': videoUrl,
+        'title': alarmTitle,
+      });
+
+      debugPrint("Alarm scheduled with result: $result");
+
+      // _showSuccess(result);
+      // showMessage(context, result, Colors.green);
+    } on PlatformException catch (e) {
+      debugPrint("Failed to schedule alarm: ${e.message}");
     }
   }
 
-  Future<void> _showVideoNotification(ReminderItem video) async {
+  // Future<void> checkAndShowScheduledVideos() async {
+  //   // final prefs = await SharedPreferences.getInstance();
+  //   // final videosJson = prefs.getStringList('scheduled_videos') ?? [];
+
+  //   final db = await _getDatabase();
+  //   final data = await db.query('user_reminders');
+  //   // final now = DateTime.now();
+
+  //   for (final videoJson in data) {
+  //     final video = ReminderItem.fromJson(videoJson);
+
+  //     // Check if it's time to show this video (Video Time is the same as Time of the day)
+  //     final now = DateTime.now();
+  //     final timeOfTheDay = TimeOfDay.now();
+  //     if (video.scheduledDate.isAtSameMomentAs(now) &&
+  //         video.scheduledTime.isAtSameTimeAs(timeOfTheDay)) {
+  //       await _showVideoNotification(video);
+
+  //       // Remove non-recurring videos after showing
+  //       if (!video.isActive) {
+  //         await removeScheduledVideo(video.id);
+  //       }
+  //     }
+  //   }
+  // }
+
+  Future<void> showVideoNotification(ReminderItem video) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
           'video_channel',
@@ -176,11 +201,6 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
       platformChannelSpecifics,
       payload: json.encode(video.toJson()),
     );
-  }
-
-  Future<void> removeScheduledVideo(String videoId) async {
-    final db = await _getDatabase();
-    await db.delete('user_reminders', where: 'id = ?', whereArgs: [videoId]);
   }
 
   void updateReminders(List<ReminderItem> newReminders) {

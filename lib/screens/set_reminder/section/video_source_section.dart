@@ -26,13 +26,13 @@ class VideoSourceSection extends StatefulWidget {
 class _VideoSourceSectionState extends State<VideoSourceSection> {
   bool _isVideoUrl = false;
   bool _isVideoFile = false;
-  List<XFile>? _mediaFileList;
+  List<XFile>? mediaFileList;
 
   File? _videoPath;
   File? _thumbnailFile;
 
   void _setImageFileListFromFile(XFile? value) {
-    _mediaFileList = value == null ? null : <XFile>[value];
+    mediaFileList = value == null ? null : <XFile>[value];
   }
 
   bool isVideo = false;
@@ -212,7 +212,7 @@ class _VideoSourceSectionState extends State<VideoSourceSection> {
           if (response.files == null) {
             _setImageFileListFromFile(response.file);
           } else {
-            _mediaFileList = response.files;
+            mediaFileList = response.files;
           }
         });
       }

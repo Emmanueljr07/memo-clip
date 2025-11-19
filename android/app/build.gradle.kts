@@ -43,6 +43,10 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    val appcompat_version = "1.7.1"
+
+    implementation("androidx.appcompat:appcompat:$appcompat_version")
 }
 
 flutter {

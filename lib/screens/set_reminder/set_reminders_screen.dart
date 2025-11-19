@@ -7,6 +7,7 @@ import 'package:memo_clip/screens/reminders/tabs.dart';
 import 'package:memo_clip/screens/set_reminder/section/date_time_section.dart';
 import 'package:memo_clip/screens/set_reminder/section/title_section.dart';
 import 'package:memo_clip/screens/set_reminder/section/video_source_section.dart';
+import 'package:memo_clip/widgets/loading_screen.dart';
 
 class SetRemindersScreen extends ConsumerStatefulWidget {
   const SetRemindersScreen({super.key});
@@ -16,23 +17,31 @@ class SetRemindersScreen extends ConsumerStatefulWidget {
 }
 
 class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
+  // static const platform = MethodChannel('memoclip.app/video_alarm_channel');
   // Controller handler for TitleSection
   late final TextEditingController titleController;
 
   // Handlers for VideoSource Section
-  File? videoPath;
-  File? thumbnailFilePath;
+  File? _videoPath;
+  File? _thumbnailFilePath;
 
   // Controller handlers for DateTimeSection
   DateTime? pickedDate;
   TimeOfDay? pickedTime;
 
+  bool _isLoading = false;
+
   void _saveReminder() {
+    // Show Loading Indicator
+    setState(() {
+      _isLoading = true;
+    });
+
     final enteredtitle = titleController.text;
-    final enteredVideo = videoPath;
+    final enteredVideo = _videoPath;
     final scheduledDate = pickedDate;
     final scheduledTime = pickedTime;
-    final thumbnail = thumbnailFilePath;
+    final thumbnail = _thumbnailFilePath;
     final isActive = true;
 
     debugPrint("Time: $pickedTime");
@@ -47,6 +56,11 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
           thumbnail!,
           isActive,
         );
+
+    setState(() {
+      _isLoading = false;
+    });
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -63,8 +77,8 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
     titleController = TextEditingController();
     // selectedDate = DateTime.now();
     // selectedTime = TimeOfDay.now();
-    videoPath = null;
-    thumbnailFilePath = null;
+    _videoPath = null;
+    _thumbnailFilePath = null;
   }
 
   @override
@@ -72,6 +86,26 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
     titleController.dispose();
     super.dispose();
   }
+
+  // void _showError(String message) {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text(message),
+  //       backgroundColor: Colors.red,
+  //       duration: const Duration(seconds: 3),
+  //     ),
+  //   );
+  // }
+
+  // void _showSuccess(String message) {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text(message),
+  //       backgroundColor: Colors.green,
+  //       duration: const Duration(seconds: 5),
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -119,8 +153,8 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
                       VideoSourceSection(
                         onVideoPicked: (File path, File thumbnail) {
                           setState(() {
-                            videoPath = path;
-                            thumbnailFilePath = thumbnail;
+                            _videoPath = path;
+                            _thumbnailFilePath = thumbnail;
                           });
                         },
                       ),
@@ -201,6 +235,8 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
                     ],
                   ),
                 ),
+
+                if (_isLoading) LoadingScreen(showLoading: _isLoading),
               ],
             ),
           ),
