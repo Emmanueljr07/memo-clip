@@ -236,7 +236,7 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
                   ),
                 ),
 
-                if (_isLoading) LoadingScreen(showLoading: _isLoading),
+                if (_isLoading) LoadingScreen(),
               ],
             ),
           ),

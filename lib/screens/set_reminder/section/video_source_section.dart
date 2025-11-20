@@ -167,7 +167,7 @@ class _VideoSourceSectionState extends State<VideoSourceSection> {
   @override
   void deactivate() {
     if (_controller != null) {
-      _controller!.setVolume(0.0);
+      // _controller!.setVolume(0.0); // Mute the video
       _controller!.pause();
     }
     super.deactivate();
@@ -334,16 +334,13 @@ class _VideoSourceSectionState extends State<VideoSourceSection> {
                         ),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Expanded(
-                        child: Align(
-                          alignment: Alignment.center,
-
-                          child: AspectRatio(
-                            aspectRatio: 2.8,
-                            child: ListTile(
-                              leading: Icon(Icons.slideshow_rounded),
-                              title: Text('Choose File'),
-                            ),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: AspectRatio(
+                          aspectRatio: 2.8,
+                          child: ListTile(
+                            leading: Icon(Icons.slideshow_rounded),
+                            title: Text('Choose File'),
                           ),
                         ),
                       ),

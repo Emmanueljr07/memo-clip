@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:memo_clip/models/reminder_item.dart';
 import 'package:memo_clip/provider/user_reminders.dart';
+import 'package:memo_clip/screens/pip_player/pip_video_player.dart';
+import 'package:memo_clip/screens/set_reminder/set_reminders_screen.dart';
+import 'package:memo_clip/screens/video_player/video_player.dart';
 import 'package:memo_clip/widgets/reminder_card.dart';
 import 'package:memo_clip/widgets/show_message.dart';
 
@@ -62,21 +65,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  // void cancelAlarm(int alarmId) async {
-  //   try {
-  //     await platform.invokeMethod('cancelAlarm', alarmId);
-  //     // print("Alarm cancelled with result: $result");
-  //     // _showSuccess('Alarm $alarmId cancelled successfully.');
-  //     showMessage(
-  //       context,
-  //       'New Alarm $alarmId cancelled successfully.',
-  //       Colors.green,
-  //     );
-  //   } on PlatformException catch (e) {
-  //     _showError('Failed to cancel alarm: ${e.message}');
-  //   }
-  // }
-
   void _onListenAlarmChannel() {
     debugPrint("Listening...");
     // Set the handler to receive messages from Java
@@ -93,82 +81,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _handleAlarmTriggered(dynamic arguments) {
-    final data = Map<String, dynamic>.from(arguments);
+    debugPrint(">>> Alarm Method Called");
+    try {
+      final data = Map<String, dynamic>.from(arguments);
 
-    // Extract the arguments passed from java
-    debugPrint("Alarm triggered method called in Flutter");
-    debugPrint("Arguments: $data");
+      debugPrint("Arguments: $data");
 
-    // final String videoUrl = data['videoUrl'];
-    // final String title = data['title'];
-    // final String alarmId = data['alarmId'];
+      final String videoUrl = data['videoUrl'] ?? '';
+      final String title = data['title'] ?? '';
+      final int alarmId = data['alarmId'] as int;
 
-    // Navigate to Video Player Screen
-    if (mounted) {
-      // Navigator.of(context).push(MaterialPageRoute(builder:   (context)=> PipVideoPlayer))
+      debugPrint(">>> Parsed - ID: $alarmId, Title: $title, URL: $videoUrl");
+      // Extract the arguments passed from java
+      // debugPrint("Alarm triggered method called in Flutter");
+
+      // Navigate to Video Player Screen
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => PipVideoPlayer(
+              title: title,
+              videoUrl: videoUrl,
+              id: alarmId.toString(),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint(">>> ERROR in _handleAlarmTriggered: $e");
     }
+
+    // }
   }
-
-  /// Schedule an alarm to trigger at the selected time
-  // Future<void> _scheduleAlarm() async {
-  //   final videoUrl = _videoUrlController.text.trim();
-  //   // var uuid = Uuid();
-
-  //   // // Generate a v4 (random) id that will use cryptRNG for its rng function
-  //   // final yid = uuid.v4();
-  //   // print("Random Id" + yid);
-  //   // print("Random hashcode " + (yid.hashCode).toString());
-
-  //   if (videoUrl.isEmpty) {
-  //     _showError('Please enter a video URL');
-  //     return;
-  //   }
-
-  //   if (!_hasExactAlarmPermission) {
-  //     _showError('Please grant exact alarm permission first');
-  //     return;
-  //   }
-
-  //   try {
-  //     // Calculate trigger time in milliseconds
-  //     final now = DateTime.now();
-  //     final scheduledDate = DateTime(
-  //       now.year,
-  //       now.month,
-  //       now.day,
-  //       22,
-  //       04,
-  //       // _selectedTime.hour,
-  //       // _selectedTime.minute,
-  //     );
-
-  //     // If selected time is in the past today, schedule for tomorrow
-  //     final triggerTime = scheduledDate.isBefore(now)
-  //         ? scheduledDate.add(const Duration(days: 1))
-  //         : scheduledDate;
-
-  //     final triggerTimeMillis = triggerTime.millisecondsSinceEpoch;
-
-  //     // Call native method to schedule alarm
-  //     final result = await platform.invokeMethod('scheduleAlarm', {
-  //       'alarmId': _currentAlarmId,
-  //       'triggerTimeMillis': triggerTimeMillis,
-  //       'videoUrl': videoUrl,
-  //       'title': _titleController.text.trim(),
-  //     });
-
-  //     setState(() {
-  //       _statusMessage =
-  //           'Alarm scheduled for ${_formatDateTime(triggerTime)}\nID: $_currentAlarmId';
-  //       _currentAlarmId++; // Increment for next alarm
-  //     });
-  //     print("Alarm scheduled with result: $result");
-
-  //     _showSuccess(result.toString());
-  //   } on PlatformException catch (e) {
-  //     _showError('Failed to schedule alarm: ${e.message}');
-  //   }
-  // }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -243,6 +187,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // _scheduleAlarm();
           // Example: Set alarm for 2:30 PM
           // cancelAlarm(2);
+          // Navigator.of(context).pushNamed('/set_reminder');
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => SetRemindersScreen()));
         },
         child: Icon(Icons.add),
       ),
@@ -338,11 +286,24 @@ class ReminderList extends ConsumerWidget {
               padding: EdgeInsets.only(right: 20),
               child: Icon(Icons.delete, color: Colors.white),
             ),
-            child: ReminderCard(
-              image: image,
-              title: reminders[index].title,
-              scheduleDate: date,
-              scheduleTime: time,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      VideoPlayerScreen(videoItem: reminders[index]),
+                  // PipVideoPlayer(
+                  //   id: reminders[index].id,
+                  //   title: reminders[index].title,
+                  //   videoUrl: reminders[index].videoPath.path,
+                  // ),
+                ),
+              ),
+              child: ReminderCard(
+                image: image,
+                title: reminders[index].title,
+                scheduleDate: date,
+                scheduleTime: time,
+              ),
             ),
           ),
         );
