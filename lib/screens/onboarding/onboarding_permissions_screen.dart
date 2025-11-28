@@ -1,6 +1,9 @@
+// import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:memo_clip/screens/onboarding/onboarding_final_screen.dart';
+import 'package:memo_clip/widgets/show_message.dart';
+// import 'package:permission_handler/permission_handler.dart';
 
 class OnboardingPermissionsScreen extends StatefulWidget {
   const OnboardingPermissionsScreen({super.key});
@@ -10,42 +13,38 @@ class OnboardingPermissionsScreen extends StatefulWidget {
       _OnboardingPermissionsScreenState();
 }
 
-void _onPermissionsGranted(BuildContext context) async {
-  // Logic to handle when permissions are granted
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-  final permissionStatus = await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-      >()!
-      .requestNotificationsPermission();
-
-  if (permissionStatus == true) {
-    Navigator.push(
-      // ignore: use_build_context_synchronously
-      context,
-      MaterialPageRoute(builder: (context) => const OnboardingFinalScreen()),
-    );
-  } else {
-    // Handle the case where permission is denied
-    // ignore: use_build_context_synchronously
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Notification permission denied. Please enable it in settings.',
-        ),
-      ),
-    );
-    Navigator.push(
-      // ignore: use_build_context_synchronously
-      context,
-      MaterialPageRoute(builder: (context) => const OnboardingFinalScreen()),
-    );
-  }
-}
-
 class _OnboardingPermissionsScreenState
     extends State<OnboardingPermissionsScreen> {
+  AwesomeNotifications awesomeNotifications = AwesomeNotifications();
+
+  void checkPermissions() async {
+    // Request notification permission
+    bool notificationAllowed = await awesomeNotifications
+        .isNotificationAllowed();
+    if (!notificationAllowed) {
+      final bool isNotificationAllowed = await awesomeNotifications
+          .requestPermissionToSendNotifications();
+
+      if (!isNotificationAllowed) {
+        if (mounted) {
+          showMessage(
+            context,
+            "Notification permission denied. Please enable it in settings.",
+            Colors.red[300]!,
+          );
+        }
+      }
+    }
+
+    // Permissions granted, navigate to the final onboarding screen
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const OnboardingFinalScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -180,7 +179,7 @@ class _OnboardingPermissionsScreenState
                     child: ElevatedButton(
                       onPressed: () {
                         // Handle permission request logic here
-                        _onPermissionsGranted(context);
+                        checkPermissions();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,

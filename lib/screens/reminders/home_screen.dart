@@ -1,14 +1,83 @@
+import 'dart:developer';
+
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:memo_clip/models/reminder_item.dart';
 import 'package:memo_clip/provider/user_reminders.dart';
-import 'package:memo_clip/screens/pip_player/pip_video_player.dart';
 import 'package:memo_clip/screens/set_reminder/set_reminders_screen.dart';
 import 'package:memo_clip/screens/video_player/video_player.dart';
+import 'package:memo_clip/services/notification_service.dart';
 import 'package:memo_clip/widgets/reminder_card.dart';
 import 'package:memo_clip/widgets/show_message.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  log('callbackDispatcher called');
+  Workmanager().executeTask((task, inputData) async {
+    switch (task) {
+      case "showVideo":
+        try {
+          final String videoUrl = inputData?['videoUrl'] ?? '';
+          final String title = inputData?['title'] ?? '';
+          final int alarmId = inputData?['alarmId'] ?? 0;
+          debugPrint(
+            ">>> Background Task - ID: $alarmId, Title: $title, URL: $videoUrl",
+          );
+
+          // Create a high-priority notification to wake the app
+          await NotificationService.createNewNotification(
+            videoUrl: videoUrl,
+            title: title,
+            notId: alarmId,
+            thumbnailUrl:
+                'https://storage.googleapis.com/cms-storage-bucket/d406c736e7c4c57f5f61.png',
+          );
+          // await AwesomeNotifications().createNotification(
+          //   content: NotificationContent(
+          //     id: 1,
+          //     channelKey: 'memoclip',
+          //     title: '🎬 Time to Watch Video!',
+          //     body: 'Tap to open and play your scheduled video',
+          //     category: NotificationCategory.Alarm,
+          //     wakeUpScreen: true,
+          //     fullScreenIntent: true,
+          //     criticalAlert: true,
+          //     notificationLayout: NotificationLayout.BigText,
+          //     payload: {
+          //       'action': 'play_video',
+          //       'videoUrl': videoUrl,
+          //       'title': title,
+          //       'alarmId': alarmId.toString(),
+          //     },
+          //   ),
+          //   actionButtons: [
+          //     NotificationActionButton(
+          //       key: 'PLAY',
+          //       label: 'Play Now',
+          //       actionType: ActionType.Default,
+          //     ),
+          //     NotificationActionButton(
+          //       key: 'DISMISS',
+          //       label: 'Dismiss',
+          //       actionType: ActionType.DismissAction,
+          //     ),
+          //   ],
+          // );
+        } catch (e) {
+          debugPrint(">>> ERROR in background task: $e");
+        }
+        break;
+      default:
+        break;
+    }
+    return Future.value(true);
+  });
+}
 
 const platform = MethodChannel('memoclip.app/video_alarm_channel');
 
@@ -22,18 +91,38 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late Future<void> _remindersFuture;
   bool _hasExactAlarmPermission = false;
+  bool hasNotificationPermissions = false;
 
   @override
   void initState() {
     super.initState();
     // Listen to channel
     _onListenAlarmChannel();
-
+    Workmanager().initialize(callbackDispatcher);
     _remindersFuture = ref
         .read(userRemindersProvider.notifier)
         .fetchReminders();
 
     _checkExactAlarmPermission();
+    _checkNotificationAndRequestPermissions();
+  }
+
+  Future<void> _checkNotificationAndRequestPermissions() async {
+    // Request notification permission
+    bool notificationAllowed = await AwesomeNotifications()
+        .isNotificationAllowed();
+    if (!notificationAllowed) {
+      await AwesomeNotifications().requestPermissionToSendNotifications();
+    }
+
+    // Request exact alarm permission (Android 12+)
+    if (await Permission.scheduleExactAlarm.isDenied) {
+      await Permission.scheduleExactAlarm.request();
+    }
+
+    setState(() {
+      hasNotificationPermissions = true;
+    });
   }
 
   /// Check if the app has permission to schedule exact alarms (Android 12+)
@@ -95,23 +184,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // Extract the arguments passed from java
       // debugPrint("Alarm triggered method called in Flutter");
 
-      // Navigate to Video Player Screen
-      if (mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => PipVideoPlayer(
-              title: title,
-              videoUrl: videoUrl,
-              id: alarmId.toString(),
-            ),
-          ),
-        );
-      }
+      // Register Background Task
+      Workmanager().registerOneOffTask(
+        "Alarm$alarmId",
+        "showVideo",
+        inputData: {'videoUrl': videoUrl, 'title': title, 'alarmId': alarmId},
+        initialDelay: const Duration(seconds: 1),
+      );
     } catch (e) {
       debugPrint(">>> ERROR in _handleAlarmTriggered: $e");
     }
-
-    // }
   }
 
   void _showError(String message) {
@@ -183,6 +265,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
+          // Workmanager().registerOneOffTask(
+          //   "Alarm001",
+          //   "showVideo",
+          //   inputData: {
+          //     'videoUrl':
+          //         "/data/user/0/com.example.memo_clip/app_flutter/1000747982.mp4",
+          //     'title': "Trying",
+          //     'alarmId': 001,
+          //   },
+          //   initialDelay: const Duration(seconds: 5),
+          // );
           // _requestExactAlarmPermission();
           // _scheduleAlarm();
           // Example: Set alarm for 2:30 PM

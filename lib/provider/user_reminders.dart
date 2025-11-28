@@ -1,11 +1,11 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:convert';
+// import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:memo_clip/constants/constants.dart';
 import 'package:memo_clip/models/reminder_item.dart';
@@ -20,8 +20,8 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
 
   static const platform = MethodChannel(Constants.plateformSTRING);
 
-  final FlutterLocalNotificationsPlugin notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  // final FlutterLocalNotificationsPlugin notificationsPlugin =
+  //     FlutterLocalNotificationsPlugin();
 
   Future<Database> _getDatabase() async {
     // Implement database initialization and return the database instance
@@ -179,29 +179,29 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
   //   }
   // }
 
-  Future<void> showVideoNotification(ReminderItem video) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-          'video_channel',
-          'Video Notifications',
-          channelDescription: 'Notifications for scheduled videos',
-          importance: Importance.max,
-          priority: Priority.high,
-          showWhen: true,
-        );
+  // Future<void> showVideoNotification(ReminderItem video) async {
+  //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
+  //       AndroidNotificationDetails(
+  //         'video_channel',
+  //         'Video Notifications',
+  //         channelDescription: 'Notifications for scheduled videos',
+  //         importance: Importance.max,
+  //         priority: Priority.high,
+  //         showWhen: true,
+  //       );
 
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-    );
+  //   const NotificationDetails platformChannelSpecifics = NotificationDetails(
+  //     android: androidPlatformChannelSpecifics,
+  //   );
 
-    await notificationsPlugin.show(
-      video.id.hashCode,
-      'Scheduled Video: ${video.title}',
-      'It\'s time to watch your scheduled video!',
-      platformChannelSpecifics,
-      payload: json.encode(video.toJson()),
-    );
-  }
+  //   await notificationsPlugin.show(
+  //     video.id.hashCode,
+  //     'Scheduled Video: ${video.title}',
+  //     'It\'s time to watch your scheduled video!',
+  //     platformChannelSpecifics,
+  //     payload: json.encode(video.toJson()),
+  //   );
+  // }
 
   void updateReminders(List<ReminderItem> newReminders) {
     state = newReminders;
