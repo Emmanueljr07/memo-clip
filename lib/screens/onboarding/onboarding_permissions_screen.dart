@@ -28,7 +28,6 @@ class _OnboardingPermissionsScreenState
       if (!isNotificationAllowed) {
         if (mounted) {
           showMessage(
-            context,
             "Notification permission denied. Please enable it in settings.",
             Colors.red[300]!,
           );

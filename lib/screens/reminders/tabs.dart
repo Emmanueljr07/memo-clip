@@ -4,6 +4,7 @@ import 'package:memo_clip/models/reminder_item.dart';
 import 'package:memo_clip/screens/reminders/home_screen.dart';
 import 'package:memo_clip/screens/reminders/section/bottom_nav_section.dart';
 import 'package:memo_clip/screens/set_reminder/set_reminders_screen.dart';
+import 'package:memo_clip/screens/settings/settings.dart';
 
 class TabsScreen extends StatefulWidget {
   const TabsScreen({super.key});
@@ -28,7 +29,7 @@ class _TabsScreenState extends State<TabsScreen> {
   late final pages = [
     const HomeScreen(),
     SetRemindersScreen(),
-    const Center(child: Text('Settings')),
+    SettingsScreen(),
   ];
 
   @override

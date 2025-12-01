@@ -11,7 +11,6 @@ import 'package:memo_clip/screens/set_reminder/set_reminders_screen.dart';
 import 'package:memo_clip/screens/video_player/video_player.dart';
 import 'package:memo_clip/services/notification_service.dart';
 import 'package:memo_clip/widgets/reminder_card.dart';
-import 'package:memo_clip/widgets/show_message.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -37,37 +36,6 @@ void callbackDispatcher() {
             thumbnailUrl:
                 'https://storage.googleapis.com/cms-storage-bucket/d406c736e7c4c57f5f61.png',
           );
-          // await AwesomeNotifications().createNotification(
-          //   content: NotificationContent(
-          //     id: 1,
-          //     channelKey: 'memoclip',
-          //     title: '🎬 Time to Watch Video!',
-          //     body: 'Tap to open and play your scheduled video',
-          //     category: NotificationCategory.Alarm,
-          //     wakeUpScreen: true,
-          //     fullScreenIntent: true,
-          //     criticalAlert: true,
-          //     notificationLayout: NotificationLayout.BigText,
-          //     payload: {
-          //       'action': 'play_video',
-          //       'videoUrl': videoUrl,
-          //       'title': title,
-          //       'alarmId': alarmId.toString(),
-          //     },
-          //   ),
-          //   actionButtons: [
-          //     NotificationActionButton(
-          //       key: 'PLAY',
-          //       label: 'Play Now',
-          //       actionType: ActionType.Default,
-          //     ),
-          //     NotificationActionButton(
-          //       key: 'DISMISS',
-          //       label: 'Dismiss',
-          //       actionType: ActionType.DismissAction,
-          //     ),
-          //   ],
-          // );
         } catch (e) {
           debugPrint(">>> ERROR in background task: $e");
         }
@@ -265,22 +233,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          // Workmanager().registerOneOffTask(
-          //   "Alarm001",
-          //   "showVideo",
-          //   inputData: {
-          //     'videoUrl':
-          //         "/data/user/0/com.example.memo_clip/app_flutter/1000747982.mp4",
-          //     'title': "Trying",
-          //     'alarmId': 001,
-          //   },
-          //   initialDelay: const Duration(seconds: 5),
-          // );
-          // _requestExactAlarmPermission();
-          // _scheduleAlarm();
-          // Example: Set alarm for 2:30 PM
-          // cancelAlarm(2);
-          // Navigator.of(context).pushNamed('/set_reminder');
           Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (context) => SetRemindersScreen()));
@@ -300,25 +252,6 @@ class ReminderList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (reminders.isEmpty) {
       return Center(child: Text('No Reminders Added Yet!'));
-    }
-
-    void cancelAlarm(int alarmId) async {
-      try {
-        await platform.invokeMethod('cancelAlarm', alarmId);
-        showMessage(
-          // ignore: use_build_context_synchronously
-          context,
-          'New Alarm $alarmId cancelled successfully.',
-          Colors.green,
-        );
-      } on PlatformException catch (e) {
-        showMessage(
-          // ignore: use_build_context_synchronously
-          context,
-          'Failed to cancel alarm: ${e.message}',
-          Colors.red,
-        );
-      }
     }
 
     return ListView.builder(
@@ -360,12 +293,10 @@ class ReminderList extends ConsumerWidget {
             onDismissed: (direction) {
               // Handle reminder deletion here
               final reminderId = (reminders[index].id);
-              final alarmId = reminderId.hashCode;
+              final title = reminders[index].title;
               ref
                   .read(userRemindersProvider.notifier)
-                  .removeReminder(reminderId);
-
-              cancelAlarm(alarmId);
+                  .removeReminder(reminderId, title);
             },
             background: Container(
               color: Colors.red,

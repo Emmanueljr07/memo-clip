@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:memo_clip/constants/constants.dart';
 import 'package:memo_clip/models/reminder_item.dart';
+import 'package:memo_clip/widgets/show_message.dart';
 import 'package:path_provider/path_provider.dart' as syspaths;
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart' as sql;
@@ -144,6 +145,8 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
         'title': alarmTitle,
       });
 
+      showMessage("$title Video Reminder created", Colors.green);
+
       debugPrint("Alarm scheduled with result: $result");
 
       // _showSuccess(result);
@@ -207,11 +210,18 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
     state = newReminders;
   }
 
-  void removeReminder(String id) async {
+  void removeReminder(String id, String title) async {
     final db = await _getDatabase();
+    final alarmId = id.hashCode;
     await db.delete('user_reminders', where: 'id = ?', whereArgs: [id]);
+    try {
+      await platform.invokeMethod('cancelAlarm', alarmId);
+    } on PlatformException catch (e) {
+      showMessage('Failed to cancel alarm: ${e.message}', Colors.red);
+    }
 
     state = state.where((reminder) => reminder.id != id).toList();
+    showMessage('Reminder $title deleted successfully.', Colors.green);
   }
 }
 

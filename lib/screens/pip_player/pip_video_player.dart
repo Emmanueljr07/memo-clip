@@ -20,9 +20,10 @@ class PipVideoPlayer extends StatefulWidget {
 }
 
 class _PipVideoPlayerState extends State<PipVideoPlayer> {
-  late final VideoPlayerController _controller;
+  VideoPlayerController? _controller;
   String _debugStatus = "Starting initialization";
   bool _videoInitialized = false;
+  Future<void>? _initializeVideoPlayerFuture;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _PipVideoPlayerState extends State<PipVideoPlayer> {
 
   Future<void> loadVideo(File? file) async {
     try {
+      if (!mounted) return;
       setState(() {
         _debugStatus = "Creating controller";
       });
@@ -48,19 +50,34 @@ class _PipVideoPlayerState extends State<PipVideoPlayer> {
         } else {
           controller = VideoPlayerController.file(File(file.path));
         }
-        _controller = controller;
+
         const double volume = kIsWeb ? 0.0 : 1.0;
         await controller.setVolume(volume);
+
+        if (!mounted) {
+          await controller.dispose();
+          return;
+        }
+        _controller = controller;
         await controller.initialize();
-        await controller.setLooping(false);
-        await controller.play();
-        await controller.enterPipMode(width: 350, height: 400);
+
+        _initializeVideoPlayerFuture = _controller!.initialize().then((_) {
+          setState(() {});
+        });
+        await _controller!.setLooping(false);
+        await _controller!.play();
+        try {
+          await _controller!.enterPipMode(width: 350, height: 400);
+        } catch (e) {
+          debugPrint("PiP failed to start auto: $e");
+        }
+        // await _controller!.enterPipMode(width: 350, height: 400);
 
         setState(() {
           _debugStatus = "Initializing VideoPlayerController";
+          _videoInitialized = true;
         });
 
-        _videoInitialized = true;
         setState(() {});
       }
     } catch (e) {
@@ -73,45 +90,56 @@ class _PipVideoPlayerState extends State<PipVideoPlayer> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final deviceHeight = MediaQuery.of(context).size.height;
+    // Check both boolean and null safety
+    final isReady = _videoInitialized && _controller != null;
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: Stack(
         children: [
           Center(
-            child: _videoInitialized
-                ? AspectRatio(
-                    aspectRatio: _controller.value.aspectRatio,
-                    child: VideoPlayer(_controller),
-                  )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 20),
-                      Text(_debugStatus),
-                    ],
-                  ),
+            child: FutureBuilder(
+              future: _initializeVideoPlayerFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  return AspectRatio(
+                    aspectRatio: _controller!.value.aspectRatio,
+                    child: VideoPlayer(_controller!),
+                  );
+                } else {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 20),
+                        Text(_debugStatus),
+                      ],
+                    ),
+                  );
+                }
+              },
+            ),
           ),
-          if (_videoInitialized)
+          if (isReady)
             Center(
               child: IconButton(
                 onPressed: () {
-                  if (_controller.value.isPlaying) {
-                    _controller.pause();
+                  if (_controller!.value.isPlaying) {
+                    _controller!.pause();
                   } else {
-                    _controller.play();
+                    _controller!.play();
                   }
                   setState(() {});
                 },
                 icon: Icon(
-                  _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                  _controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
                 ),
               ),
             ),
@@ -126,10 +154,10 @@ class _PipVideoPlayerState extends State<PipVideoPlayer> {
               children: [
                 IconButton(
                   onPressed: () {
-                    final currentPosition = _controller.value.position;
+                    final currentPosition = _controller!.value.position;
                     final newPosition =
                         currentPosition - const Duration(seconds: 5);
-                    _controller.seekTo(
+                    _controller!.seekTo(
                       newPosition >= Duration.zero
                           ? newPosition
                           : Duration.zero,
@@ -140,15 +168,15 @@ class _PipVideoPlayerState extends State<PipVideoPlayer> {
 
                 IconButton(
                   onPressed: () {
-                    if (_controller.value.isPlaying) {
-                      _controller.pause();
+                    if (_controller!.value.isPlaying) {
+                      _controller!.pause();
                     } else {
-                      _controller.play();
+                      _controller!.play();
                     }
                     setState(() {});
                   },
                   icon: Icon(
-                    _controller.value.isPlaying
+                    _controller!.value.isPlaying
                         ? Icons.pause_rounded
                         : Icons.play_arrow_rounded,
                     color: Colors.white,
@@ -157,11 +185,11 @@ class _PipVideoPlayerState extends State<PipVideoPlayer> {
 
                 IconButton(
                   onPressed: () {
-                    final currentPosition = _controller.value.position;
-                    final videoDuration = _controller.value.duration;
+                    final currentPosition = _controller!.value.position;
+                    final videoDuration = _controller!.value.duration;
                     final newPosition =
                         currentPosition + const Duration(seconds: 5);
-                    _controller.seekTo(
+                    _controller!.seekTo(
                       newPosition <= videoDuration
                           ? newPosition
                           : videoDuration,
@@ -174,17 +202,17 @@ class _PipVideoPlayerState extends State<PipVideoPlayer> {
           ),
         ],
       ),
-      floatingActionButton: (_videoInitialized && deviceHeight >= 500)
+      floatingActionButton: (isReady && deviceHeight >= 500)
           ? FloatingActionButton(
               onPressed: () {
-                final aspectRatio = _controller.value.aspectRatio;
+                final aspectRatio = _controller!.value.aspectRatio;
                 const width = 300;
                 final height = width / aspectRatio;
-                _controller.enterPipMode(width: width, height: height.toInt());
+                _controller!.enterPipMode(width: width, height: height.toInt());
               },
               child: const Icon(Icons.picture_in_picture),
               //       child: Icon(
-              //   _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+              //   _controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
               // ),
             )
           : null,

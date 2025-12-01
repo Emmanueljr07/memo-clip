@@ -41,6 +41,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.10.1"
+  better_native_video_player:
+    dependency: "direct main"
+    description:
+      name: better_native_video_player
+      sha256: c906abe7e4067f856a3f50e97e7cdd7903c76f96813c54d16bfff33dfa2f96ab
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.2"
   boolean_selector:
     dependency: transitive
     description:
@@ -193,6 +201,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  floating:
+    dependency: transitive
+    description:
+      name: floating
+      sha256: e51ce1dbcab3ea83da0ad1b07f2091b99c0e8680184c780a000567f41234d454
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.0"
   flutter:
     dependency: "direct main"
     description: flutter
