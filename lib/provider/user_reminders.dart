@@ -1,11 +1,7 @@
-// ignore_for_file: use_build_context_synchronously
-
-// import 'dart:convert';
 import 'dart:io';
-
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:memo_clip/constants/constants.dart';
 import 'package:memo_clip/models/reminder_item.dart';
@@ -14,7 +10,6 @@ import 'package:path_provider/path_provider.dart' as syspaths;
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart' as sql;
 import 'package:sqflite/sqlite_api.dart';
-// import 'package:workmanager/workmanager.dart';
 
 class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
   UserRemindersNotifier() : super(const []);
@@ -148,9 +143,6 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
       showMessage("$title Video Reminder created", Colors.green);
 
       debugPrint("Alarm scheduled with result: $result");
-
-      // _showSuccess(result);
-      // showMessage(context, result, Colors.green);
     } on PlatformException catch (e) {
       debugPrint("Failed to schedule alarm: ${e.message}");
     }
@@ -182,29 +174,37 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
   //   }
   // }
 
-  // Future<void> showVideoNotification(ReminderItem video) async {
-  //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
-  //       AndroidNotificationDetails(
-  //         'video_channel',
-  //         'Video Notifications',
-  //         channelDescription: 'Notifications for scheduled videos',
-  //         importance: Importance.max,
-  //         priority: Priority.high,
-  //         showWhen: true,
-  //       );
-
-  //   const NotificationDetails platformChannelSpecifics = NotificationDetails(
-  //     android: androidPlatformChannelSpecifics,
-  //   );
-
-  //   await notificationsPlugin.show(
-  //     video.id.hashCode,
-  //     'Scheduled Video: ${video.title}',
-  //     'It\'s time to watch your scheduled video!',
-  //     platformChannelSpecifics,
-  //     payload: json.encode(video.toJson()),
-  //   );
-  // }
+  Future<void> showVideoNotification({
+    required String videoUrl,
+    required String title,
+    required int notId,
+  }) async {
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: notId,
+        channelKey: 'memoclip',
+        title: '$title video reminder',
+        body: "You created a video reminder",
+        category: NotificationCategory.Reminder,
+        wakeUpScreen: true,
+        fullScreenIntent: true,
+        criticalAlert: true,
+        payload: {
+          'action': 'create_video',
+          'videoUrl': videoUrl,
+          'title': title,
+          'notId': notId.toString(),
+        },
+      ),
+      actionButtons: [
+        NotificationActionButton(
+          key: 'DISMISS_REMINDER',
+          label: 'Dismiss',
+          actionType: ActionType.DismissAction,
+        ),
+      ],
+    );
+  }
 
   void updateReminders(List<ReminderItem> newReminders) {
     state = newReminders;

@@ -96,7 +96,7 @@ public class PipVideoActivity extends Activity {
     private void enterPipMode() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
-                Rational aspectRatio = new Rational(16, 9);
+                Rational aspectRatio = new Rational(9, 16);
                 PictureInPictureParams params = new PictureInPictureParams.Builder()
                     .setAspectRatio(aspectRatio)
                     .build();

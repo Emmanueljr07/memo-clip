@@ -22,7 +22,7 @@ import android.content.BroadcastReceiver;
 
 public class MainActivity extends FlutterActivity {
     private static final String CHANNEL = "memoclip.app/video_alarm_channel";
-    private MethodChannel methodChannel;
+    public static MethodChannel methodChannel;
     private BroadcastReceiver alarmBroadcastReceiver;
 
     @Override
@@ -54,6 +54,13 @@ public class MainActivity extends FlutterActivity {
 
         // Register broadcast receiver for alarm notifications
         setupBroadcastReceiver();
+    }
+
+    // Optional: Clean up when the activity is destroyed to prevent memory leaks
+    @Override
+    protected void onDestroy() {
+        methodChannel = null;
+        super.onDestroy();
     }
 
 /**

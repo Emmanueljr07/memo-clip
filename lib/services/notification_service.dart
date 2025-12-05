@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:memo_clip/main.dart';
-import 'package:memo_clip/screens/pip_player/pip_video_player.dart';
+import 'package:memo_clip/screens/pip_player/better_video_player.dart';
 
 class NotificationService {
   static ReceivedAction? initialAction;
@@ -102,6 +102,9 @@ class NotificationService {
     final videoUrl = receivedAction.payload?['videoUrl'] ?? '';
     final alarmId = receivedAction.payload?['alarmId'] ?? '';
     debugPrint("Title: $title");
+    debugPrint("Title: $alarmId");
+
+    final vidId = int.tryParse(alarmId) ?? -1;
 
     if (receivedAction.buttonKeyPressed == 'PLAY' ||
         receivedAction.payload?['action'] == 'play_video') {
@@ -109,7 +112,7 @@ class NotificationService {
       MyApp.navigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (ctx) =>
-              PipVideoPlayer(title: title, videoUrl: videoUrl, id: alarmId),
+              BetterVideoPlayer(title: title, videoUrl: videoUrl, id: vidId),
         ),
       );
     }
@@ -201,7 +204,7 @@ class NotificationService {
         id: notId,
         channelKey: 'memoclip',
         title: '🎬 Time to Watch Video!',
-        body: "Tap to open and play your scheduled video",
+        body: "Tap to open and play your video",
         bigPicture: thumbnailUrl,
         category: NotificationCategory.Alarm,
         wakeUpScreen: true,

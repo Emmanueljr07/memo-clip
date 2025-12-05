@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:better_native_video_player/better_native_video_player.dart';
 import 'package:memo_clip/widgets/loading_screen.dart';
 import 'package:memo_clip/widgets/show_message.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 
 class BetterVideoPlayer extends StatefulWidget {
   const BetterVideoPlayer({
@@ -31,6 +32,43 @@ class _BetterVideoPlayerState extends State<BetterVideoPlayer> {
 
   Future<void> _initializePlayer() async {
     try {
+      final bool isConnected =
+          await InternetConnectionChecker.instance.hasConnection;
+
+      // Check if video is a web link
+      final isVideoLink =
+          widget.videoUrl.startsWith('http://') ||
+          widget.videoUrl.startsWith('https://');
+
+      if (isVideoLink && !isConnected) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: Text('No Internet Connection'),
+                content: Text('Please check your connection and try again '),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      _initializePlayer();
+                      Navigator.of(context).pop(true);
+                    },
+
+                    child: Text('Try again'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+        return;
+      }
+
       // Create controller
       _controller = NativeVideoPlayerController(
         id: widget.id,
@@ -45,9 +83,6 @@ class _BetterVideoPlayerState extends State<BetterVideoPlayer> {
       // Initialize
       await _controller.initialize();
 
-      final isVideoLink =
-          widget.videoUrl.startsWith('http://') ||
-          widget.videoUrl.startsWith('https://');
       if (kIsWeb || isVideoLink) {
         // Load video:
         // Load remote URL (HLS stream)

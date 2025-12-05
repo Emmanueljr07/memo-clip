@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memo_clip/provider/theme_provider.dart';
+import 'package:memo_clip/theme/theme.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final userTheme = ref.read(themeProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -106,90 +110,109 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               // LIGHT THEME
-                              Column(
-                                children: [
-                                  Container(
-                                    height: 90,
-                                    width: 103,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.white,
-                                      border: Border.all(color: Colors.grey),
-                                    ),
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.wb_sunny_outlined,
-                                        size: 30,
-                                        color: Colors.blue[400],
+                              GestureDetector(
+                                onTap: () {
+                                  userTheme.themeData(lightMode);
+                                },
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      height: 90,
+                                      width: 103,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: Colors.white,
+                                        border: Border.all(color: Colors.grey),
+                                      ),
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.wb_sunny_outlined,
+                                          size: 30,
+                                          color: Colors.blue[400],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(height: 3),
-                                  Text(
-                                    "Light",
-                                    style: TextStyle(
-                                      color: colorScheme.onSurface,
-                                      fontSize: 12,
+                                    SizedBox(height: 3),
+                                    Text(
+                                      "Light",
+                                      style: TextStyle(
+                                        color: colorScheme.onSurface,
+                                        fontSize: 12,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
 
                               // DARK THEME
-                              Column(
-                                children: [
-                                  Container(
-                                    height: 90,
-                                    width: 103,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.black,
-                                      border: Border.all(
-                                        color: Colors.grey,
-                                        width: 1,
+                              GestureDetector(
+                                onTap: () {
+                                  userTheme.themeData(darkMode);
+                                },
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      height: 90,
+                                      width: 103,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: Colors.black,
+                                        border: Border.all(
+                                          color: Colors.grey,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.dark_mode_outlined,
+                                          size: 30,
+                                          color: Colors.grey,
+                                        ),
                                       ),
                                     ),
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.dark_mode_outlined,
-                                        size: 30,
-                                        color: Colors.grey,
+                                    SizedBox(height: 3),
+                                    Text(
+                                      "Dark",
+                                      style: TextStyle(
+                                        color: colorScheme.onSurface,
+                                        fontSize: 12,
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(height: 3),
-                                  Text(
-                                    "Dark",
-                                    style: TextStyle(
-                                      color: colorScheme.onSurface,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
 
                               // SYSTEM THEME
-                              Column(
-                                children: [
-                                  Container(
-                                    height: 90,
-                                    width: 103,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: Colors.black26,
-                                      border: Border.all(color: Colors.grey),
+                              GestureDetector(
+                                onTap: () {
+                                  if (ThemeMode.system == ThemeMode.dark) {
+                                    userTheme.themeData(darkMode);
+                                  } else {
+                                    userTheme.themeData(lightMode);
+                                  }
+                                },
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      height: 90,
+                                      width: 103,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: Colors.black26,
+                                        border: Border.all(color: Colors.grey),
+                                      ),
+                                      child: Text(''),
                                     ),
-                                    child: Text(''),
-                                  ),
-                                  SizedBox(height: 3),
-                                  Text(
-                                    "System",
-                                    style: TextStyle(
-                                      color: colorScheme.onSurface,
-                                      fontSize: 12,
+                                    SizedBox(height: 3),
+                                    Text(
+                                      "System",
+                                      style: TextStyle(
+                                        color: colorScheme.onSurface,
+                                        fontSize: 12,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),

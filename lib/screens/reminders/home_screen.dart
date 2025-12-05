@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,45 +7,13 @@ import 'package:memo_clip/models/reminder_item.dart';
 import 'package:memo_clip/provider/user_reminders.dart';
 import 'package:memo_clip/screens/set_reminder/set_reminders_screen.dart';
 import 'package:memo_clip/screens/video_player/video_player.dart';
-import 'package:memo_clip/services/notification_service.dart';
 import 'package:memo_clip/widgets/reminder_card.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:memo_clip/constants/constants.dart';
+import 'package:memo_clip/widgets/show_message.dart';
 
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  log('callbackDispatcher called');
-  Workmanager().executeTask((task, inputData) async {
-    switch (task) {
-      case "showVideo":
-        try {
-          final String videoUrl = inputData?['videoUrl'] ?? '';
-          final String title = inputData?['title'] ?? '';
-          final int alarmId = inputData?['alarmId'] ?? 0;
-          debugPrint(
-            ">>> Background Task - ID: $alarmId, Title: $title, URL: $videoUrl",
-          );
-
-          // Create a high-priority notification to wake the app
-          await NotificationService.createNewNotification(
-            videoUrl: videoUrl,
-            title: title,
-            notId: alarmId,
-            thumbnailUrl:
-                'https://storage.googleapis.com/cms-storage-bucket/d406c736e7c4c57f5f61.png',
-          );
-        } catch (e) {
-          debugPrint(">>> ERROR in background task: $e");
-        }
-        break;
-      default:
-        break;
-    }
-    return Future.value(true);
-  });
-}
-
-const platform = MethodChannel('memoclip.app/video_alarm_channel');
+const platform = MethodChannel(Constants.plateformSTRING);
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -66,7 +32,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     // Listen to channel
     _onListenAlarmChannel();
-    Workmanager().initialize(callbackDispatcher);
     _remindersFuture = ref
         .read(userRemindersProvider.notifier)
         .fetchReminders();
@@ -106,7 +71,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       });
     } on PlatformException catch (e) {
-      _showError('Permission check failed: ${e.message}');
+      showMessage('Permission check failed: ${e.message}', Colors.red);
     }
   }
 
@@ -118,7 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       await Future.delayed(const Duration(milliseconds: 500));
       await _checkExactAlarmPermission();
     } on PlatformException catch (e) {
-      _showError('Permission request failed: ${e.message}');
+      showMessage('Permission request failed: ${e.message}', Colors.red);
     }
   }
 
@@ -149,8 +114,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final int alarmId = data['alarmId'] as int;
 
       debugPrint(">>> Parsed - ID: $alarmId, Title: $title, URL: $videoUrl");
-      // Extract the arguments passed from java
-      // debugPrint("Alarm triggered method called in Flutter");
+
+      // Check If VideoUrl requires internet to play
+      final isVideoLink =
+          videoUrl.startsWith('http://') || videoUrl.startsWith('https://');
 
       // Register Background Task
       Workmanager().registerOneOffTask(
@@ -158,31 +125,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         "showVideo",
         inputData: {'videoUrl': videoUrl, 'title': title, 'alarmId': alarmId},
         initialDelay: const Duration(seconds: 1),
+        constraints: Constraints(
+          networkType: isVideoLink
+              ? NetworkType.connected
+              : NetworkType.notRequired,
+          requiresBatteryNotLow: false,
+          requiresCharging: false,
+          requiresDeviceIdle: false,
+          requiresStorageNotLow: false,
+        ),
       );
     } catch (e) {
       debugPrint(">>> ERROR in _handleAlarmTriggered: $e");
     }
   }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  // void _showSuccess(String message) {
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(
-  //       content: Text(message),
-  //       backgroundColor: Colors.green,
-  //       duration: const Duration(seconds: 3),
-  //     ),
-  //   );
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -282,7 +238,6 @@ class ReminderList extends ConsumerWidget {
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(true),
-
                         child: Text('Delete'),
                       ),
                     ],
@@ -335,49 +290,3 @@ class ReminderList extends ConsumerWidget {
     );
   }
 }
-
-
-
-
-
-  // Future<void> _initializeApp() async {
-  //   await Workmanager().initialize(callbackDispatcher);
-  //   await backgroundVideoService.initialize();
-
-  //   // Set up notification tap handler
-  //   backgroundVideoService.notificationsPlugin
-  //       .getNotificationAppLaunchDetails();
-
-  //   // Listen for new notifications while app is running
-  //   backgroundVideoService.notificationsPlugin.initialize(
-  //     const InitializationSettings(
-  //       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-  //     ),
-  //     onDidReceiveNotificationResponse: onDidReceiveNotificationResponse,
-  //   );
-  // }
-
-  // void onDidReceiveNotificationResponse(
-  //   NotificationResponse notificationResponse,
-  // ) async {
-  //   final String? payload = notificationResponse.payload;
-  //   if (notificationResponse.payload != null) {
-  //     debugPrint('notification payload: $payload');
-  //   }
-  //   // await Navigator.push(
-  //   //   context,
-  //   //   MaterialPageRoute<void>(builder: (context) => VideoPlayerScreen(videoItem: ReminderItem.fromJson(json.decode(payload!)))),
-  //   // );
-  //   _handleNotificationPayload(payload);
-  // }
-
-  // void _handleNotificationPayload(String? payload) {
-  //   if (payload != null) {
-  //     final video = ReminderItem.fromJson(json.decode(payload));
-  //     Navigator.of(context).push(
-  //       MaterialPageRoute(
-  //         builder: (context) => VideoPlayerScreen(videoItem: video),
-  //       ),
-  //     );
-  //   }
-  // }
