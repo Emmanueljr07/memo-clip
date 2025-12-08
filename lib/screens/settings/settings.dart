@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memo_clip/provider/theme_provider.dart';
-import 'package:memo_clip/theme/theme.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -14,8 +13,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final userTheme = ref.read(themeProvider.notifier);
-
+    final userThemeMode = ref.read(themeModeProvider.notifier);
+    final usermode = ref.watch(themeModeProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: SafeArea(
@@ -112,7 +111,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               // LIGHT THEME
                               GestureDetector(
                                 onTap: () {
-                                  userTheme.themeData(lightMode);
+                                  // userTheme.themeData(lightMode);
+                                  userThemeMode.setThemeMode("light");
                                 },
                                 child: Column(
                                   children: [
@@ -122,7 +122,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(10),
                                         color: Colors.white,
-                                        border: Border.all(color: Colors.grey),
+                                        border: Border.all(
+                                          color: usermode == ThemeMode.light
+                                              ? Colors.blue
+                                              : Colors.transparent,
+                                          width: 2,
+                                        ),
                                       ),
                                       child: Center(
                                         child: Icon(
@@ -147,7 +152,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               // DARK THEME
                               GestureDetector(
                                 onTap: () {
-                                  userTheme.themeData(darkMode);
+                                  // userTheme.themeData(darkMode);
+                                  userThemeMode.setThemeMode("dark");
                                 },
                                 child: Column(
                                   children: [
@@ -158,8 +164,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                         borderRadius: BorderRadius.circular(10),
                                         color: Colors.black,
                                         border: Border.all(
-                                          color: Colors.grey,
-                                          width: 1,
+                                          color: usermode == ThemeMode.dark
+                                              ? Colors.blue
+                                              : Colors.transparent,
+                                          width: 2,
                                         ),
                                       ),
                                       child: Center(
@@ -185,11 +193,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               // SYSTEM THEME
                               GestureDetector(
                                 onTap: () {
-                                  if (ThemeMode.system == ThemeMode.dark) {
-                                    userTheme.themeData(darkMode);
-                                  } else {
-                                    userTheme.themeData(lightMode);
-                                  }
+                                  userThemeMode.setThemeMode("system");
                                 },
                                 child: Column(
                                   children: [
@@ -199,7 +203,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(10),
                                         color: Colors.black26,
-                                        border: Border.all(color: Colors.grey),
+                                        border: Border.all(
+                                          color: usermode == ThemeMode.system
+                                              ? Colors.blue
+                                              : Colors.transparent,
+                                          width: 2,
+                                        ),
                                       ),
                                       child: Text(''),
                                     ),

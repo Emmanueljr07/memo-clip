@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memo_clip/provider/theme_provider.dart';
 import 'package:memo_clip/services/notification_service.dart';
 import 'package:memo_clip/splash_screen.dart';
+import 'package:memo_clip/theme/theme.dart';
 import 'package:workmanager/workmanager.dart';
 
 @pragma('vm:entry-point')
@@ -73,12 +74,15 @@ class MyApp extends ConsumerWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userTheme = ref.watch(themeProvider);
+    // final userTheme = ref.watch(themeProvider);
+    final userThemeMode = ref.watch(themeModeProvider);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Memo-Clip',
-      theme: userTheme,
+      theme: lightMode,
+      darkTheme: darkMode,
+      themeMode: userThemeMode,
       navigatorKey: navigatorKey,
       home: const SplashScreen(),
     );
