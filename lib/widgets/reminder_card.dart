@@ -18,17 +18,23 @@ class ReminderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: EdgeInsets.only(right: 1, left: 2, top: 2, bottom: 0),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary,
+        color: colorScheme.secondary,
         borderRadius: BorderRadius.circular(10),
       ),
       child: ListTile(
         contentPadding: EdgeInsets.only(left: 5),
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: CircleAvatar(radius: 26, backgroundImage: FileImage(image)),
+          child: SizedBox(
+            height: 60,
+            width: 55,
+            child: Image.file(image, fit: BoxFit.cover),
+          ),
+          // child: CircleAvatar(radius: 26, backgroundImage: FileImage(image)),
         ),
         isThreeLine: false,
         title: Text(title),

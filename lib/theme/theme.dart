@@ -16,7 +16,8 @@ ThemeData darkMode = ThemeData(
   brightness: Brightness.dark,
   colorScheme: ColorScheme.dark(
     primary: AppColors.darkPrimary,
-    secondary: AppColors.darkSecondary,
+    // secondary: AppColors.darkSecondary,
+    secondary: const Color(0xFF102A36),
     surface: AppColors.darkBackground,
     onSurface: AppColors.darkTextPrimary,
   ),

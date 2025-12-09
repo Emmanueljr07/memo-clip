@@ -129,6 +129,7 @@ private void setupBroadcastReceiver() {
             long triggerTimeMillis = ((Number) args.get("triggerTimeMillis")).longValue();
             String videoUrl = (String) args.get("videoUrl");
             String title = (String) args.get("title");
+            String interval = (String) args.get("interval");
 
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             
@@ -145,28 +146,75 @@ private void setupBroadcastReceiver() {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
-
-            // Schedule exact alarm
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTimeMillis,
-                    pendingIntent
-                );
-            } else {
-                alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTimeMillis,
-                    pendingIntent
-                );
+            
+            switch (interval) {
+                case "noRepeat":
+                    // Schedule exact alarm
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        alarmManager.setExactAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP,
+                            triggerTimeMillis,
+                            pendingIntent
+                        );
+                    } else {
+                        alarmManager.setExact(
+                            AlarmManager.RTC_WAKEUP,
+                            triggerTimeMillis,
+                            pendingIntent
+                        );
+                    }
+                    break;
+                case "daily":
+                    final long DAILY = AlarmManager.INTERVAL_DAY;
+                    handleRepeatingAlarm(triggerTimeMillis, DAILY, pendingIntent);
+                case "weekly":
+                    final long WEEKLY = AlarmManager.INTERVAL_DAY * 7;
+                    handleRepeatingAlarm(triggerTimeMillis, WEEKLY, pendingIntent);
+                case "monthly":
+                    final long MONTHLY = AlarmManager.INTERVAL_DAY * 30;
+                    handleRepeatingAlarm(triggerTimeMillis, MONTHLY, pendingIntent);
+                case "yearly":
+                    final long YEARLY = AlarmManager.INTERVAL_DAY * 365;
+                    handleRepeatingAlarm(triggerTimeMillis, YEARLY, pendingIntent);
+                default:
+                    alarmManager.setExact(
+                            AlarmManager.RTC_WAKEUP,
+                            triggerTimeMillis,
+                            pendingIntent
+                        );
+                    break;
             }
+            // // Schedule exact alarm
+            // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            //     alarmManager.setExactAndAllowWhileIdle(
+            //         AlarmManager.RTC_WAKEUP,
+            //         triggerTimeMillis,
+            //         pendingIntent
+            //     );
+            // } else {
+            //     alarmManager.setExact(
+            //         AlarmManager.RTC_WAKEUP,
+            //         triggerTimeMillis,
+            //         pendingIntent
+            //     );
+            // }
             // System.out.println("Scheduled alarm ID: " + alarmId + " at " + triggerTimeMillis);
-            result.success("Alarm scheduled successfully for ID: " + alarmId);
+            result.success("Alarm scheduled successfully for ID: " + alarmId + "Interval: " +interval);
         } catch (Exception e) {
             result.error("SCHEDULE_ERROR", e.getMessage(), null);
         }
     }
 
+        private void handleRepeatingAlarm(long triggerTimeMillis, long interval, PendingIntent pendingIntent) {
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+            alarmManager.setRepeating(
+                AlarmManager.RTC_WAKEUP,
+                    triggerTimeMillis,
+                    interval,
+                    pendingIntent
+            );
+        }
         private void handleCancelAlarm(Object arguments, MethodChannel.Result result) {
         try {
             int alarmId = (int) arguments;

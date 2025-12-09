@@ -26,7 +26,7 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
       path.join(dbPath, 'reminders.db'),
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE user_reminders(id TEXT PRIMARY KEY, title TEXT, video_path TEXT, scheduled_date TEXT, scheduled_time TEXT, thumbnail TEXT, is_active INTEGER)',
+          'CREATE TABLE user_reminders(id TEXT PRIMARY KEY, title TEXT, video_path TEXT, scheduled_date TEXT, scheduled_time TEXT, thumbnail TEXT, is_active INTEGER,is_repeating INTEGER, repeat_interval TEXT)',
         );
       },
       version: 1,
@@ -49,8 +49,12 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
           minute: int.parse((item['scheduled_time'] as String).split(':')[1]),
         ),
         thumbnail: File(item['thumbnail'] as String),
-
         isActive: (item['is_active'] as int) == 1,
+        isRepeating: (item['is_repeating'] as int) == 1,
+        repeatInterval: RepeatInterval.values.firstWhere(
+          (e) => e.toString().split('.').last == item['repeat_interval'],
+          orElse: () => RepeatInterval.noRepeat,
+        ),
       );
     }).toList();
 
@@ -64,6 +68,7 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
     TimeOfDay scheduledTime,
     File thumbnail,
     bool isActive,
+    RepeatInterval interval,
   ) async {
     final appDir = await syspaths.getApplicationDocumentsDirectory();
     final videoFileName = path.basename(videoPath.path);
@@ -75,27 +80,19 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
     );
 
     final reminder = ReminderItem(
-      videoPath: copiedVideo,
       title: title,
+      videoPath: copiedVideo,
       scheduledDate: scheduledDate,
       scheduledTime: scheduledTime,
       thumbnail: copiedThumbnail,
-
       isActive: isActive,
+      isRepeating: false,
+      repeatInterval: interval,
     );
 
     final db = await _getDatabase();
 
-    db.insert("user_reminders", {
-      "id": reminder.id,
-      "title": reminder.title,
-      "video_path": reminder.videoPath.path,
-      "scheduled_date": reminder.scheduledDate.toIso8601String(),
-      "scheduled_time":
-          '${reminder.scheduledTime.hour}:${reminder.scheduledTime.minute}',
-      "thumbnail": reminder.thumbnail.path,
-      "is_active": reminder.isActive ? 1 : 0,
-    });
+    db.insert("user_reminders", reminder.toJson());
     state = [...state, reminder];
 
     debugPrint('Reminder added: ${reminder.title}');
@@ -105,6 +102,8 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
     final videoUrl = reminder.videoPath.path;
     final alarmTitle = reminder.title;
     final alarmId = (reminder.id).hashCode;
+    final repeatInterval = reminder.repeatInterval.name;
+    debugPrint("Interval: $repeatInterval");
     // final alarmId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
     if (videoUrl.isEmpty) {
@@ -138,6 +137,7 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
         'triggerTimeMillis': triggerTimeMillis,
         'videoUrl': videoUrl,
         'title': alarmTitle,
+        'interval': repeatInterval,
       });
 
       showMessage("$title Video Reminder created", Colors.green);
