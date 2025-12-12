@@ -9,20 +9,23 @@ class ReminderCard extends StatelessWidget {
     required this.title,
     required this.scheduleDate,
     required this.scheduleTime,
+    required this.isActive,
   });
 
   final File image;
   final String title;
   final String scheduleDate;
   final String scheduleTime;
-
+  final bool isActive;
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: EdgeInsets.only(right: 1, left: 2, top: 2, bottom: 0),
       decoration: BoxDecoration(
-        color: colorScheme.secondary,
+        color: isActive
+            ? colorScheme.secondary
+            : colorScheme.secondary.withAlpha(100),
         borderRadius: BorderRadius.circular(10),
       ),
       child: ListTile(
@@ -49,6 +52,7 @@ class ReminderCard extends StatelessWidget {
             children: [Text(scheduleDate), Text(scheduleTime)],
           ),
         ),
+        trailing: isActive ? Text('') : Text('Completed ✅'),
       ),
     );
   }

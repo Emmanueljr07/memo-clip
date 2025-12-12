@@ -58,6 +58,23 @@ class UserRemindersNotifier extends StateNotifier<List<ReminderItem>> {
       );
     }).toList();
 
+    for (var i = 0; i < reminders.length; i++) {
+      final now = DateTime.now();
+      final date = reminders[i].scheduledDate;
+      final time = reminders[i].scheduledTime;
+      final year = date.year;
+      final month = date.month;
+      final day = date.day;
+      final hour = time.hour;
+      final minute = time.minute;
+
+      final reminderDate = DateTime(year, month, day, hour, minute);
+      final dateCheck = reminderDate.isBefore(now);
+      if (dateCheck && reminders[i].repeatInterval == RepeatInterval.noRepeat) {
+        reminders[i].isActive = false;
+      }
+    }
+
     state = reminders;
   }
 

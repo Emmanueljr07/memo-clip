@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:memo_clip/widgets/fileuploadbutton.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
-// ignore: must_be_immutable
 class VideoSourceSection extends StatefulWidget {
   // final String? videoPath;
   // final String? thumbnailFilePath;
@@ -24,12 +24,13 @@ class VideoSourceSection extends StatefulWidget {
 }
 
 class _VideoSourceSectionState extends State<VideoSourceSection> {
-  bool _isVideoUrl = false;
+  // bool _isVideoUrl = false;
   bool _isVideoFile = false;
   List<XFile>? mediaFileList;
 
   File? _videoPath;
   File? _thumbnailFile;
+  // String? _videoUrl;
 
   void _setImageFileListFromFile(XFile? value) {
     mediaFileList = value == null ? null : <XFile>[value];
@@ -68,18 +69,23 @@ class _VideoSourceSectionState extends State<VideoSourceSection> {
   }
 
   Future<XFile?> generateThumbnail(String videoPath) async {
-    final thumbnailPath = await VideoThumbnail.thumbnailFile(
-      video: videoPath,
-      thumbnailPath: (await getTemporaryDirectory()).path,
-      imageFormat:
-          ImageFormat.JPEG, // You can choose other formats like PNG, WEBP
-      maxHeight: 128, // Customize thumbnail size
-      quality: 75, // Customize thumbnail quality (0-100)
-    );
-    if (thumbnailPath != null) {
-      return XFile(thumbnailPath);
+    try {
+      final thumbnailPath = await VideoThumbnail.thumbnailFile(
+        video: videoPath,
+        thumbnailPath: (await getTemporaryDirectory()).path,
+        imageFormat:
+            ImageFormat.JPEG, // You can choose other formats like PNG, WEBP
+        maxHeight: 128, // Customize thumbnail size
+        quality: 75, // Customize thumbnail quality (0-100)
+      );
+      if (thumbnailPath != null) {
+        return XFile(thumbnailPath);
+      }
+      return null;
+    } catch (e) {
+      debugPrint("Video Thumbnail Error: $e");
+      return null;
     }
-    return null;
   }
 
   Future<void> _onVideoButtonPressed(
@@ -161,7 +167,7 @@ class _VideoSourceSectionState extends State<VideoSourceSection> {
   @override
   void initState() {
     super.initState();
-    _isVideoUrl = true;
+    _isVideoFile = true;
   }
 
   @override
@@ -244,30 +250,30 @@ class _VideoSourceSectionState extends State<VideoSourceSection> {
           child: Row(
             children: [
               // Video URL Button
-              Expanded(
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _isVideoUrl = true;
-                      _isVideoFile = false;
-                    });
-                  },
-                  child: VideoUrlButton(
-                    isVideoUrl: _isVideoUrl,
-                    colorScheme: colorScheme,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
+              // Expanded(
+              //   child: InkWell(
+              //     onTap: () {
+              //       setState(() {
+              //         _isVideoUrl = true;
+              //         _isVideoFile = false;
+              //       });
+              //     },
+              //     child: VideoUrlButton(
+              //       isVideoUrl: _isVideoUrl,
+              //       colorScheme: colorScheme,
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(width: 10),
 
               // File Upload Button
               Expanded(
                 child: InkWell(
                   onTap: () {
-                    setState(() {
-                      _isVideoUrl = false;
-                      _isVideoFile = true;
-                    });
+                    // setState(() {
+                    //   _isVideoUrl = false;
+                    //   _isVideoFile = true;
+                    // });
                   },
                   child: FileUploadButton(
                     isVideoFile: _isVideoFile,
@@ -282,22 +288,50 @@ class _VideoSourceSectionState extends State<VideoSourceSection> {
         const SizedBox(height: 15),
 
         // Input Video Url
-        Visibility(
-          visible: _isVideoUrl,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Video URL"),
-              const SizedBox(height: 3),
-              Row(
-                children: [
-                  Expanded(child: TextField()),
-                  ElevatedButton(onPressed: null, child: Text('Add')),
-                ],
-              ),
-            ],
-          ),
-        ),
+        //     Visibility(
+        //       visible: _isVideoUrl,
+        //       child: Column(
+        //         crossAxisAlignment: CrossAxisAlignment.start,
+        //         children: [
+        //           Text("Video URL"),
+        //           const SizedBox(height: 3),
+        //           Row(
+        //             children: [
+        //               Expanded(
+        //                 child: TextField(
+        //                   onChanged: (value) {
+        //                         setState(() {
+        //   _videoUrl = value;
+        // });
+        //                   },
+        //                   decoration: InputDecoration(
+        //                     hintText: 'https://example.com/video.mp4',
+        //                     border: OutlineInputBorder(
+        //                       borderRadius: BorderRadius.circular(8),
+        //                       borderSide: BorderSide(color: colorScheme.surface),
+        //                     ),
+        //                     focusedBorder: OutlineInputBorder(
+        //                       borderRadius: BorderRadius.circular(8),
+        //                       borderSide: BorderSide(
+        //                         color: colorScheme.primary,
+        //                         width: 2,
+        //                       ),
+        //                     ),
+        //                   ),
+        //                 ),
+        //               ),
+        //               ElevatedButton(
+        //                 onPressed: () {
+        //                     validateVideoUrl(_videoUrl);
+
+        //                 },
+        //                 child: Text('Add')
+        //               )
+        //             ],
+        //           ),
+        //         ],
+        //       ),
+        //     ),
 
         // Upload Video File
         Visibility(
@@ -395,6 +429,31 @@ class _VideoSourceSectionState extends State<VideoSourceSection> {
       ],
     );
   }
+
+  // void validateVideoUrl(value) async {
+  //   final isvalid = Uri.tryParse(_videoUrl!);
+  //   debugPrint('Value: $_videoUrl');
+  //   if (_videoUrl == null && isvalid == null) {
+  //     showMessage("Enter a valid Url link", Colors.red);
+  //   }
+  //   else if (isvalid != null) {
+  //     debugPrint('Link: $_videoUrl');
+  //     // Generating Thumbnail
+  //     final generatedthumbnail = await generateThumbnail(_videoUrl!);
+  //     if (generatedthumbnail != null) {
+  //       setState(() {
+  //         _thumbnailFile = File(generatedthumbnail.path);
+  //       });
+  //     }
+  //     File videoUrlPath = File(_videoUrl!);
+  //     // Callback to parent
+  //     if (generatedthumbnail != null) {
+  //       widget.onVideoPicked(videoUrlPath, _thumbnailFile!);
+  //     }
+  //     debugPrint('Video path: $videoUrlPath');
+  //     debugPrint('Thumbnail path: ${_thumbnailFile!.path}');
+  //   }
+  // }
 }
 
 class AspectRatioVideo extends StatefulWidget {
@@ -445,93 +504,5 @@ class AspectRatioVideoState extends State<AspectRatioVideo> {
     } else {
       return Container();
     }
-  }
-}
-
-class FileUploadButton extends StatelessWidget {
-  const FileUploadButton({
-    super.key,
-    required bool isVideoFile,
-    required this.colorScheme,
-  }) : _isVideoFile = isVideoFile;
-
-  final bool _isVideoFile;
-  final ColorScheme colorScheme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 45,
-      decoration: BoxDecoration(
-        color: _isVideoFile ? colorScheme.onSurface : colorScheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: colorScheme.onSurface.withAlpha(150),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.file_upload_outlined,
-            color: _isVideoFile ? colorScheme.surface : colorScheme.onSurface,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            'File',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: _isVideoFile ? colorScheme.surface : colorScheme.onSurface,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class VideoUrlButton extends StatelessWidget {
-  const VideoUrlButton({
-    super.key,
-    required bool isVideoUrl,
-    required this.colorScheme,
-  }) : _isVideoUrl = isVideoUrl;
-
-  final bool _isVideoUrl;
-  final ColorScheme colorScheme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 45,
-      decoration: BoxDecoration(
-        color: _isVideoUrl ? colorScheme.onSurface : colorScheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: colorScheme.onSurface.withAlpha(150),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.link,
-            color: _isVideoUrl ? colorScheme.surface : colorScheme.onSurface,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            "Video URL",
-            style: TextStyle(
-              fontSize: 12,
-              color: _isVideoUrl ? colorScheme.surface : colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

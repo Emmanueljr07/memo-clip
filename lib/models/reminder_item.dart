@@ -14,7 +14,7 @@ class ReminderItem {
   final File thumbnail;
   final bool isRepeating;
   final RepeatInterval repeatInterval; // e.g., "Daily", "Weekly"
-  final bool isActive;
+  bool isActive;
 
   ReminderItem({
     String? id,

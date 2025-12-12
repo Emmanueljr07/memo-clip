@@ -162,10 +162,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: _hasExactAlarmPermission
               ? FutureBuilder(
                   future: _remindersFuture,
-                  builder: (context, snapshot) =>
-                      snapshot.connectionState == ConnectionState.waiting
-                      ? const Center(child: CircularProgressIndicator())
-                      : ReminderList(reminders: userReminders),
+                  builder: (context, snapshot) {
+                    switch (snapshot.connectionState) {
+                      case ConnectionState.waiting:
+                        return const Center(child: CircularProgressIndicator());
+                      case ConnectionState.done:
+                        if (snapshot.hasError) {
+                          return Text('Error: ${snapshot.error}');
+                        } else {
+                          return ReminderList(reminders: userReminders);
+                        }
+
+                      case ConnectionState.none:
+                        return const Center(
+                          child: Text("No Reminders Created"),
+                        );
+                      default:
+                        return const Center(child: CircularProgressIndicator());
+                    }
+                  },
                 )
               : Center(
                   child: Column(
@@ -218,6 +233,10 @@ class ReminderList extends ConsumerWidget {
         ).format(reminders[index].scheduledDate);
         final time = reminders[index].scheduledTime.format(context);
         final image = reminders[index].thumbnail;
+        final isActive = reminders[index].isActive;
+        // final repeat = reminders[index].repeatInterval;
+        // debugPrint("Actives: $isActive");
+        // debugPrint("repeat: $repeat");
         return Container(
           margin: EdgeInsets.only(bottom: 10),
           child: Dismissible(
@@ -282,6 +301,7 @@ class ReminderList extends ConsumerWidget {
                 title: reminders[index].title,
                 scheduleDate: date,
                 scheduleTime: time,
+                isActive: isActive,
               ),
             ),
           ),
