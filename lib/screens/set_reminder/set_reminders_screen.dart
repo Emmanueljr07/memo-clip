@@ -9,6 +9,8 @@ import 'package:memo_clip/screens/set_reminder/section/date_time_section.dart';
 import 'package:memo_clip/screens/set_reminder/section/title_section.dart';
 import 'package:memo_clip/screens/set_reminder/section/video_source_section.dart';
 import 'package:memo_clip/widgets/loading_screen.dart';
+import 'package:memo_clip/widgets/show_message.dart';
+import 'package:uuid/uuid.dart';
 
 class SetRemindersScreen extends ConsumerStatefulWidget {
   const SetRemindersScreen({super.key});
@@ -31,8 +33,10 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
   TimeOfDay? pickedTime;
 
   bool _isLoading = false;
-
   RepeatInterval _interval = RepeatInterval.noRepeat;
+
+  // default reminder name
+  var number = Uuid().v4().substring(0, 8);
 
   void _saveReminder() {
     // Show Loading Indicator
@@ -40,39 +44,56 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
       _isLoading = true;
     });
 
-    final enteredtitle = titleController.text;
+    var enteredtitle = titleController.text;
     final enteredVideo = _videoPath;
     final scheduledDate = pickedDate;
     final scheduledTime = pickedTime;
     final thumbnail = _thumbnailFilePath;
     final isActive = true;
 
-    debugPrint("Time: $pickedTime");
+    if (enteredVideo == null ||
+        scheduledDate == null ||
+        scheduledTime == null ||
+        thumbnail == null) {
+      showMessage("Enter valid details", Colors.red);
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    } else {
+      if (enteredtitle.isEmpty) {
+        enteredtitle = 'Reminder $number';
+      }
+      ref
+          .read(userRemindersProvider.notifier)
+          .addReminder(
+            enteredVideo,
+            enteredtitle,
+            scheduledDate,
+            scheduledTime,
+            thumbnail,
+            isActive,
+            _interval,
+          );
 
-    ref
-        .read(userRemindersProvider.notifier)
-        .addReminder(
-          enteredVideo!,
-          enteredtitle,
-          scheduledDate!,
-          scheduledTime!,
-          thumbnail!,
-          isActive,
-          _interval,
-        );
+      Future.delayed(const Duration(seconds: 1), () {
+        setState(() {
+          _isLoading = false;
+        });
 
-    setState(() {
-      _isLoading = false;
-    });
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) {
-          return const TabsScreen();
-        },
-      ),
-    );
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return const TabsScreen();
+              },
+            ),
+          );
+        }
+      });
+    }
+    // debugPrint("Time: $pickedTime");
   }
 
   @override
@@ -163,6 +184,15 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
 
                           SizedBox(height: 20),
                           // Dropdown for Repeating Interval
+                          Text(
+                            "Select a Repeat Interval",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          SizedBox(height: 5),
                           Container(
                             margin: EdgeInsets.only(top: 5),
                             padding: EdgeInsets.symmetric(
@@ -185,9 +215,19 @@ class _SetRemindersScreenState extends ConsumerState<SetRemindersScreen> {
                                   ) {
                                     return DropdownMenuItem<RepeatInterval>(
                                       value: value,
-                                      child: value.name == 'noRepeat'
-                                          ? Text('Does not repeat')
-                                          : Text(value.name),
+                                      child: switch (value) {
+                                        RepeatInterval.noRepeat => Text(
+                                          'Never Repeat',
+                                        ),
+                                        RepeatInterval.hour => Text(
+                                          'Every hour',
+                                        ),
+                                        RepeatInterval.half => Text(
+                                          "Every 12 hours",
+                                        ),
+                                        RepeatInterval.daily => Text('Daily'),
+                                        RepeatInterval.weekly => Text('Weekly'),
+                                      },
                                     );
                                   })
                                   .toList(),

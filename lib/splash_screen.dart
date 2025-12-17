@@ -1,7 +1,8 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:memo_clip/screens/onboarding/welcome_screen.dart';
-
+import 'package:memo_clip/screens/reminders/tabs.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -11,16 +12,30 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
+  AwesomeNotifications awesomeNotifications = AwesomeNotifications();
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     Future.delayed(const Duration(seconds: 4), () {
+      check();
+    });
+  }
+
+  void check() async {
+    bool notificationAllowed = await awesomeNotifications
+        .isNotificationAllowed();
+    if (notificationAllowed) {
+      // ignore: use_build_context_synchronously
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const TabsScreen()),
+      );
+    } else {
       // ignore: use_build_context_synchronously
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const WelcomeScreen()),
       );
-    });
+    }
   }
 
   @override

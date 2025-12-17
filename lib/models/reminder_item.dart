@@ -3,7 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import 'dart:io';
 
-enum RepeatInterval { noRepeat, daily, weekly, monthly, yearly }
+enum RepeatInterval { noRepeat, hour, half, daily, weekly }
 
 class ReminderItem {
   final String id;

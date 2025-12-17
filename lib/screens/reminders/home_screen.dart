@@ -26,6 +26,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   late Future<void> _remindersFuture;
   bool _hasExactAlarmPermission = false;
   bool hasNotificationPermissions = false;
+  var alarmNumber = 0;
 
   @override
   void initState() {
@@ -118,13 +119,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // Check If VideoUrl requires internet to play
       final isVideoLink =
           videoUrl.startsWith('http://') || videoUrl.startsWith('https://');
-
+      setState(() {
+        alarmNumber++;
+      });
       // Register Background Task
       Workmanager().registerOneOffTask(
-        "Alarm$alarmId",
+        "Alarm$alarmId$alarmNumber",
         "showVideo",
         inputData: {'videoUrl': videoUrl, 'title': title, 'alarmId': alarmId},
-        initialDelay: const Duration(seconds: 1),
+        initialDelay: const Duration(seconds: 0),
         constraints: Constraints(
           networkType: isVideoLink
               ? NetworkType.connected

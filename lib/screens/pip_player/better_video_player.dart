@@ -32,6 +32,13 @@ class _BetterVideoPlayerState extends State<BetterVideoPlayer> {
 
   Future<void> _initializePlayer() async {
     try {
+      // Create controller
+      _controller = NativeVideoPlayerController(
+        id: widget.id,
+        autoPlay: true,
+        allowsPictureInPicture: true,
+        canStartPictureInPictureAutomatically: true,
+      );
       final bool isConnected =
           await InternetConnectionChecker.instance.hasConnection;
 
@@ -68,14 +75,6 @@ class _BetterVideoPlayerState extends State<BetterVideoPlayer> {
         }
         return;
       }
-
-      // Create controller
-      _controller = NativeVideoPlayerController(
-        id: widget.id,
-        autoPlay: true,
-        allowsPictureInPicture: true,
-        canStartPictureInPictureAutomatically: true,
-      );
 
       // Listen to events
       _controller.addActivityListener(_handleActivityEvent);

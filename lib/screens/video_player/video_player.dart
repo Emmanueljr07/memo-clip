@@ -70,7 +70,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               return AspectRatio(
-                aspectRatio: _controller.value.aspectRatio,
+                aspectRatio: 2 / 1,
                 child: VideoPlayer(_controller),
               );
             } else {

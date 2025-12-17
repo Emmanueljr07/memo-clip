@@ -164,18 +164,26 @@ private void setupBroadcastReceiver() {
                         );
                     }
                     break;
+                case "hour":
+                        final long HOUR = AlarmManager.INTERVAL_HOUR;
+                        handleRepeatingAlarm(triggerTimeMillis, HOUR, pendingIntent);
+                        System.out.println("1 HOUR Alarm");
+                        break;
+                case "half":
+                        final long HALF_DAY = AlarmManager.INTERVAL_HALF_DAY;
+                        handleRepeatingAlarm(triggerTimeMillis, HALF_DAY, pendingIntent);
+                        System.out.println("Half Day Alarm");
+                        break;
                 case "daily":
                     final long DAILY = AlarmManager.INTERVAL_DAY;
                     handleRepeatingAlarm(triggerTimeMillis, DAILY, pendingIntent);
+                 System.out.println("Daily Alarm ");
+                    break;
                 case "weekly":
                     final long WEEKLY = AlarmManager.INTERVAL_DAY * 7;
                     handleRepeatingAlarm(triggerTimeMillis, WEEKLY, pendingIntent);
-                case "monthly":
-                    final long MONTHLY = AlarmManager.INTERVAL_DAY * 30;
-                    handleRepeatingAlarm(triggerTimeMillis, MONTHLY, pendingIntent);
-                case "yearly":
-                    final long YEARLY = AlarmManager.INTERVAL_DAY * 365;
-                    handleRepeatingAlarm(triggerTimeMillis, YEARLY, pendingIntent);
+                    System.out.println("Weekly Alarm");
+                    break;
                 default:
                     alarmManager.setExact(
                             AlarmManager.RTC_WAKEUP,
@@ -208,7 +216,7 @@ private void setupBroadcastReceiver() {
         private void handleRepeatingAlarm(long triggerTimeMillis, long interval, PendingIntent pendingIntent) {
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-            alarmManager.setRepeating(
+            alarmManager.setInexactRepeating(
                 AlarmManager.RTC_WAKEUP,
                     triggerTimeMillis,
                     interval,
